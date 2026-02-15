@@ -879,10 +879,25 @@ export async function runEmbeddedPiAgent(
             );
           }
 
-          // Treat timeout as potential rate limit (Antigravity hangs on rate limit)
-          // But exclude post-prompt compaction timeouts (model succeeded; no profile issue)
+          // Treat timeout as potential rate limit (Antigravity hangs on rate limit),
+          // BUT only if the agent wasn't actively doing tool calls. A timeout during
+          // active tool use (exec, sub-agents, etc.) is a legitimate long-running turn,
+          // not an API stall. Rotating profiles in that case is wrong — it puts the
+          // auth profile into exponential cooldown for no reason and causes restarts.
+          // Also exclude post-prompt compaction timeouts (model succeeded; no profile issue).
+          const hadToolActivity =
+            timedOut && (attempt.toolMetas.length > 0 || attempt.assistantTexts.length > 0);
           const shouldRotate =
-            (!aborted && failoverFailure) || (timedOut && !timedOutDuringCompaction);
+            (!aborted && failoverFailure) ||
+            (timedOut && !hadToolActivity && !timedOutDuringCompaction);
+
+          if (hadToolActivity && !timedOutDuringCompaction && !isProbeSession) {
+            log.info(
+              `Run timed out during active tool use (not an API stall). ` +
+                `tools=${attempt.toolMetas.length} texts=${attempt.assistantTexts.length} ` +
+                `runId=${params.runId} sessionId=${params.sessionId} — skipping profile rotation.`,
+            );
+          }
 
           if (shouldRotate) {
             if (lastProfileId) {
