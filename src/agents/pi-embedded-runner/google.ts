@@ -247,6 +247,9 @@ function stripUnsupportedSchemaKeywords(schema: unknown): unknown {
   const record = { ...(schema as Record<string, unknown>) };
   for (const key of Object.keys(record)) {
     if (GOOGLE_SCHEMA_UNSUPPORTED_KEYWORDS.has(key)) {
+      if (key === "patternProperties") {
+        log.debug(`[google] stripping patternProperties from schema`);
+      }
       delete record[key];
       continue;
     }
