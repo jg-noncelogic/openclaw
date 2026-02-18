@@ -35,15 +35,12 @@ import type { GetReplyOptions, ReplyPayload } from "../types.js";
 import {
   buildEmbeddedContextFromTemplate,
   buildTemplateSenderContext,
-  buildThreadingToolContext,
   resolveEnforceFinalTag,
   resolveRunAuthProfile,
 } from "./agent-runner-utils.js";
-import { createBlockReplyPayloadKey, type BlockReplyPipeline } from "./block-reply-pipeline.js";
+import { type BlockReplyPipeline } from "./block-reply-pipeline.js";
 import type { FollowupRun } from "./queue.js";
 import { createBlockReplyDeliveryHandler } from "./reply-delivery.js";
-import { parseReplyDirectives } from "./reply-directives.js";
-import { applyReplyTagsToPayload, isRenderablePayload } from "./reply-payloads.js";
 import type { TypingSignaler } from "./typing-mode.js";
 
 export type AgentRunLoopResult =
