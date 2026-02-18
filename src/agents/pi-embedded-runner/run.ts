@@ -925,15 +925,16 @@ export async function runEmbeddedPiAgent(
             }
 
             const rotated = await advanceAuthProfile();
+            if (timedOut && params.onBlockReply) {
+              stallNotifyCount++;
+              const msg =
+                stallNotifyCount === 1
+                  ? "Response stalled \u2014 retrying..."
+                  : `Still waiting for response (retry ${stallNotifyCount})...`;
+              // Best-effort UI notification — channel send failure must not block retry.
+              Promise.resolve(params.onBlockReply({ text: msg })).catch(() => {});
+            }
             if (rotated) {
-              if (timedOut && params.onBlockReply) {
-                stallNotifyCount++;
-                const msg =
-                  stallNotifyCount === 1
-                    ? "Response stalled \u2014 retrying..."
-                    : `Still waiting for response (retry ${stallNotifyCount})...`;
-                Promise.resolve(params.onBlockReply({ text: msg })).catch(() => {});
-              }
               continue;
             }
 

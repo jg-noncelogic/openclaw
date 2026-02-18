@@ -650,13 +650,19 @@ export async function runEmbeddedAttempt(
       // Strip unsigned thinking blocks between tool-call iterations.
       // Antigravity returns thinking blocks without signatures; pi-ai's agent loop
       // accumulates them in context.messages and replays them on the next API call.
+      // NOTE: transformContext is not in Agent's public TS interface; if the upstream
+      // pi-agent-core library renames/removes this hook the assignment silently no-ops.
+      // The runtime check below detects that scenario.
       if (transcriptPolicy.normalizeAntigravityThinkingBlocks) {
-        (
-          activeSession.agent as unknown as {
-            transformContext: (msgs: AgentMessage[]) => Promise<AgentMessage[]>;
-          }
-        ).transformContext = async (messages: AgentMessage[]) =>
+        const agentRecord = activeSession.agent as unknown as Record<string, unknown>;
+        const hook = async (messages: AgentMessage[]) =>
           sanitizeAntigravityThinkingBlocks(messages);
+        agentRecord.transformContext = hook;
+        if (agentRecord.transformContext !== hook) {
+          log.warn(
+            "transformContext hook could not be set on agent — unsigned thinking blocks may not be stripped",
+          );
+        }
       }
 
       if (cacheTrace) {
@@ -770,6 +776,7 @@ export async function runEmbeddedAttempt(
       const STREAM_INACTIVITY_MS = 90_000;
       let lastStreamActivity = Date.now();
       let streamInactivityTimer: NodeJS.Timeout | null = null;
+      let streamWatchdogDone = false;
       const resetStreamActivity = () => {
         lastStreamActivity = Date.now();
       };
@@ -872,7 +879,7 @@ export async function runEmbeddedAttempt(
             abortRun(true);
             return;
           }
-          if (!aborted) {
+          if (!aborted && !streamWatchdogDone) {
             streamInactivityTimer = setTimeout(check, 30_000);
           }
         }, STREAM_INACTIVITY_MS);
@@ -1216,6 +1223,7 @@ export async function runEmbeddedAttempt(
             });
         }
       } finally {
+        streamWatchdogDone = true;
         clearTimeout(abortTimer);
         if (abortWarnTimer) {
           clearTimeout(abortWarnTimer);
@@ -1223,7 +1231,7 @@ export async function runEmbeddedAttempt(
         if (streamInactivityTimer) {
           clearTimeout(streamInactivityTimer);
         }
-        if (!isProbeSession && (aborted || timedOut) && !timedOutDuringCompaction) {
+        if (!isProbeSession && (aborted || timedOut)) {
           log.debug(
             `run cleanup: runId=${params.runId} sessionId=${params.sessionId} aborted=${aborted} timedOut=${timedOut}`,
           );
