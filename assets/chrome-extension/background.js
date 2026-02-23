@@ -239,6 +239,25 @@ async function attachTab(tabId, opts = {}) {
     throw new Error('Target.getTargetInfo returned no targetId')
   }
 
+  // Clean up previous session for this tab to prevent orphaned entries
+  const prevTab = tabs.get(tabId)
+  if (prevTab?.sessionId) {
+    tabBySession.delete(prevTab.sessionId)
+    if (prevTab.targetId) {
+      try {
+        sendToRelay({
+          method: 'forwardCDPEvent',
+          params: {
+            method: 'Target.detachedFromTarget',
+            params: { sessionId: prevTab.sessionId, targetId: prevTab.targetId },
+          },
+        })
+      } catch {
+        // Relay may be down; proceed with new attachment regardless
+      }
+    }
+  }
+
   const sessionId = `cb-tab-${nextSession++}`
   const attachOrder = nextSession
 
