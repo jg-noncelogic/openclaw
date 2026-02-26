@@ -195,6 +195,7 @@ export function buildBootstrapContextFiles(
   );
   let remainingTotalChars = totalMaxChars;
   const result: EmbeddedContextFile[] = [];
+  const truncationWarnings: string[] = [];
   for (const file of files) {
     if (remainingTotalChars <= 0) {
       break;
@@ -232,14 +233,29 @@ export function buildBootstrapContextFiles(
       continue;
     }
     if (trimmed.truncated || contentWithinBudget.length < trimmed.content.length) {
-      opts?.warn?.(
-        `workspace bootstrap file ${file.name} is ${trimmed.originalLength} chars (limit ${trimmed.maxChars}); truncating in injected context`,
+      const msg = `workspace bootstrap file ${file.name} is ${trimmed.originalLength} chars (limit ${trimmed.maxChars}); truncating in injected context`;
+      opts?.warn?.(msg);
+      truncationWarnings.push(
+        `⚠️ ${file.name}: ${trimmed.originalLength} chars exceeds ${trimmed.maxChars} limit — content was truncated. Condense this file to stay under budget.`,
       );
     }
     remainingTotalChars = Math.max(0, remainingTotalChars - contentWithinBudget.length);
     result.push({
       path: pathValue,
       content: contentWithinBudget,
+    });
+  }
+  if (truncationWarnings.length > 0) {
+    result.push({
+      path: "__context_warnings__",
+      content: [
+        "## ⚠️ Context File Budget Warnings",
+        "",
+        "The following workspace files exceed their character budget and were truncated.",
+        "The agent may be missing important context. Condense these files to fix.",
+        "",
+        ...truncationWarnings,
+      ].join("\n"),
     });
   }
   return result;

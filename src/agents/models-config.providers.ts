@@ -372,6 +372,12 @@ export function normalizeGoogleModelId(id: string): string {
   if (id === "gemini-3-flash") {
     return "gemini-3-flash-preview";
   }
+  if (id === "gemini-3.1-pro-low") {
+    return "gemini-3.1-pro-low-preview";
+  }
+  if (id === "gemini-3.1-pro-high") {
+    return "gemini-3.1-pro-high-preview";
+  }
   return id;
 }
 
@@ -521,6 +527,15 @@ function buildMoonshotProvider(): ProviderConfig {
         name: "Kimi K2.5",
         reasoning: false,
         input: ["text", "image"],
+        cost: MOONSHOT_DEFAULT_COST,
+        contextWindow: MOONSHOT_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: MOONSHOT_DEFAULT_MAX_TOKENS,
+      },
+      {
+        id: "kimi-k2-thinking",
+        name: "Kimi K2 Thinking",
+        reasoning: true,
+        input: ["text"],
         cost: MOONSHOT_DEFAULT_COST,
         contextWindow: MOONSHOT_DEFAULT_CONTEXT_WINDOW,
         maxTokens: MOONSHOT_DEFAULT_MAX_TOKENS,

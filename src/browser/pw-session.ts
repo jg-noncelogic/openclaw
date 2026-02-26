@@ -455,6 +455,7 @@ async function findPageByTargetId(
 export async function getPageForTargetId(opts: {
   cdpUrl: string;
   targetId?: string;
+  waitForStable?: boolean;
 }): Promise<Page> {
   const { browser } = await connectBrowser(opts.cdpUrl);
   const pages = await getAllPages(browser);
@@ -475,6 +476,24 @@ export async function getPageForTargetId(opts: {
     }
     throw new Error("tab not found");
   }
+
+  // After OAuth / SPA redirect chains the page object may reference a
+  // destroyed execution context.  Wait for the page to reach a stable
+  // load state so Playwright can rebuild its frame tree.
+  if (opts.waitForStable !== false) {
+    try {
+      await found.waitForLoadState("domcontentloaded", { timeout: 5_000 });
+    } catch {
+      // If domcontentloaded times out the page may still be navigating.
+      // Try load state which is lighter — just needs the frame to exist.
+      try {
+        await found.waitForLoadState("load", { timeout: 2_000 });
+      } catch {
+        // Best-effort — proceed with whatever state we have.
+      }
+    }
+  }
+
   return found;
 }
 
