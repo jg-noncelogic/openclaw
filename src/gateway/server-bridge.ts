@@ -1043,7 +1043,8 @@ export function createBridgeHandlers(ctx: BridgeHandlersContext) {
           typeof obj.sessionKey === "string" ? obj.sessionKey.trim() : "";
         const cfg = loadConfig();
         const rawMainKey = normalizeMainKey(cfg.session?.mainKey);
-        const sessionKey = sessionKeyRaw.length > 0 ? sessionKeyRaw : rawMainKey;
+        const sessionKey =
+          sessionKeyRaw.length > 0 ? sessionKeyRaw : rawMainKey;
         const { storePath, store, entry } = loadSessionEntry(sessionKey);
         // Normalize short main key alias to canonical form before store write
         const agentId = resolveAgentIdFromSessionKey(sessionKey);

@@ -201,7 +201,9 @@ export const agentHandlers: GatewayRequestHandlers = {
       const rawMainKey = normalizeMainKey(cfg.session?.mainKey);
       // Normalize short main key alias to canonical form before store write
       const storeKey =
-        requestedSessionKey === rawMainKey ? mainSessionKey : requestedSessionKey;
+        requestedSessionKey === rawMainKey
+          ? mainSessionKey
+          : requestedSessionKey;
       if (store) {
         store[storeKey] = nextEntry;
         if (storePath) {

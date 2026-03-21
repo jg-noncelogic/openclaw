@@ -8,11 +8,11 @@ import {
   resolveAgentMainSessionKey,
   saveSessionStore,
 } from "../../config/sessions.js";
+import { registerAgentRunContext } from "../../infra/agent-events.js";
 import {
   normalizeMainKey,
   resolveAgentIdFromSessionKey,
 } from "../../routing/session-key.js";
-import { registerAgentRunContext } from "../../infra/agent-events.js";
 import { defaultRuntime } from "../../runtime.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
 import {
