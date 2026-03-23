@@ -181,6 +181,7 @@
     "@types/node": "^25.0.3",
     "@types/proper-lockfile": "^4.1.4",
     "@types/qrcode-terminal": "^0.12.2",
+    "@types/tar": "^7.0.87",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.0.16",
     "docx-preview": "^0.3.7",
